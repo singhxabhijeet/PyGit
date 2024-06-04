@@ -48,7 +48,7 @@ def main():
 
         hash_object(object_type, file_name)
     elif command == "ls-tree":
-        param, hash = sys.argv[2], sys.arv[3]
+        param, hash = sys.argv[2], sys.argv[3]
         if param == "--name-only":
             with open(f".git/objects/{hash[:2]}/{hash[2:]}", "rb") as f:
                 data = zlib.decompress(f.read())
