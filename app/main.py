@@ -11,7 +11,7 @@ def hash_object(object_type, file_name):
     header = f"blob {len(file_content)}\x00"
     store = header.encode("ascii") + file_content
 
-    ha = hashlib.sha1(store).hexdigest()
+    sha = hashlib.sha1(store).hexdigest()
     git_path = os.path.join(os.getcwd(), ".git/objects")
     os.mkdir(os.path.join(git_path, sha[0:2]))
 
