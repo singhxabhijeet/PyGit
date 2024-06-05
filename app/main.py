@@ -21,8 +21,8 @@ def write_tree(path: str):
     if os.path.isfile(path):
         return create_blob_entry(path)
     contents = sorted(
-            os.listdir(path),
-            key=lambda x: x if os.path.isfile(os.path.join(path, x)) else f"{x}/",
+        os.listdir(path),
+        key=lambda x: x if os.path.isfile(os.path.join(path, x)) else f"{x}/",
     )
     s = b""
     for item in contents:
@@ -33,10 +33,9 @@ def write_tree(path: str):
             s += f"100644 {item}\0".encode()
         else:
             s += f"40000 {item}\0".encode()
-    
-    sha1 = int.to_bytes(int(write_tree(full), base=16), length=20, byteorder="big")
-    s += sha1
-    s = f"tree {len(s)}\0".encode()
+        sha1 = int.to_bytes(int(write_tree(full), base=16), length=20, byteorder="big")
+        s += sha1
+    s = f"tree {len(s)}\0".encode() + s
     sha1 = hashlib.sha1(s).hexdigest()
     os.makedirs(f".git/objects/{sha1[:2]}", exist_ok=True)
     with open(f".git/objects/{sha1[:2]}/{sha1[2:]}", "wb") as f:
