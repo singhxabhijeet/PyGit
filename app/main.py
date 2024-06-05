@@ -99,6 +99,9 @@ def main():
                     binary_data = binary_data[20:]
                     print(name.decode("utf-8"))
 
+    elif command == "write-tee":
+        print(write_tree("./"))
+
     else:
         raise RuntimeError(f"Unknown command #{command}")
 
