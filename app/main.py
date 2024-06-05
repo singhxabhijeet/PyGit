@@ -39,7 +39,7 @@ def write_tree(path: str):
     s = f"tree {len(s)}\0".encode()
     sha1 = hashlib.sha1(s).hexdigest()
     os.makedirs(f".git/objects/{sha1[:2]}", exist_ok=True)
-    with open(f".git/objects/{sha[:2]}/{sha[2:]}", "wb") as f:
+    with open(f".git/objects/{sha1[:2]}/{sha1[2:]}", "wb") as f:
         f.write(zlib.compress(s))
     return sha1
 
