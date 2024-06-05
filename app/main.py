@@ -15,7 +15,7 @@ def init_repo(parent: Path):
     (parent / ".git" / "refs" / "heads").mkdir(parents=True)
     (parent / ".git" / "HEAD").write_text("ref: refs/heads/main\n")
 
-def read_object(parent: Path, sha: str) -> Tuple[str, bytes]:
+def read_objects(parent: Path, sha: str) -> Tuple[str, bytes]:
     pre = sha[:2]
     post = sha[2:]
     p = parent / ".git" / "objects" / pre / post
@@ -24,7 +24,7 @@ def read_object(parent: Path, sha: str) -> Tuple[str, bytes]:
     ty, _ = head.split(b" ")
     return ty.decode(), content
 
-def write_object(parent: Path, ty: str, content: bytes) -> str:
+def write_objects(parent: Path, ty: str, content: bytes) -> str:
     content = ty.encode() + b" " + f"{len(content)}".encode() + b"\0" + content
     hash = hashlib.sha1(content, usedforsecurity=False).hexdigest()
     compressed_content = zlib.compress(content, level=zlib.Z_BEST_SPEED)
@@ -42,10 +42,10 @@ def main():
             init_repo(Path("."))
             print("Initialized git directory")
         case ["cat-file", "-p", blob_sha]:
-            _, content = read_object(Path("."), blob_sha)
+            _, content = read_objects(Path("."), blob_sha)
             sys.stdout.buffer.write(content)
         case ["hash-object", "-w", path]:
-            hash = write_object(Path("."), "blob", Path(path).read_bytes())
+            hash = write_objects(Path("."), "blob", Path(path).read_bytes())
             print(hash)
         case ["ls-tree", "--name-only", tree_sha]:
             items = []
@@ -74,10 +74,10 @@ def main():
                             m.encode() + b" " + n.encode() + b"\0" + bytes.fromhex(h)
                             for (m, n, h) in s_entries
                     )
-                    hash = write_object(parent, "tree", b_entries)
+                    hash = write_objects(parent, "tree", b_entries)
                     return (mode, p.name, hash)
                 else:
-                    hash = write_object(parent, "blob", p.read_bytes())
+                    hash = write_objects(parent, "blob", p.read_bytes())
                     return (mode, p.name, hash)
 
             (_, _, hash) = toEntry(Path(".").absolute(), True)
@@ -93,21 +93,21 @@ def main():
                         b"\n",
                     ]
                 )
-                hash = write_objects(Path("."), "commit", contents)
-                print(hash)
-            case ["clone", url, dir]:
-                parent = Path(dir)
-                init_repo(parent)
+            hash = write_objects(Path("."), "commit", contents)
+            print(hash)
+        case ["clone", url, dir]:
+            parent = Path(dir)
+            init_repo(parent)
 
-                req = urllib.request.Request(f"{url}/info/refs?service=git-upload-pack")
-                with urllib.request.urlopen(req) as f:
-                    refs = {
-                            bs[1].decode(): bas[0].decode()
-                            for bs0 in cast(bytes, f.read()).split(b"\n")
-                            if (bs1:= bs0[4:])
-                            and not bs1.startswith(b"#")
-                            and (bs2 := bs1.split(b"\0")[0])
-                            and (bs := (bs2[4:] if bs2.endswith(b"HEAD") else bs2).split(b" "))
+            req = urllib.request.Request(f"{url}/info/refs?service=git-upload-pack")
+            with urllib.request.urlopen(req) as f:
+                refs = {
+                    bs[1].decode(): bs[0].decode()
+                    for bs0 in cast(bytes, f.read()).split(b"\n")
+                    if (bs1:= bs0[4:])
+                    and not bs1.startswith(b"#")
+                    and (bs2 := bs1.split(b"\0")[0])
+                    and (bs := (bs2[4:] if bs2.endswith(b"HEAD") else bs2).split(b" "))
                     }
 
                 for name, sha in refs.items():
@@ -180,7 +180,7 @@ def main():
                             dec = zlib.decompressobj()
                             content = dec.decompress(pack_file)
                             pack_file = dec.unused_data
-                            write_object(parent, ty, content)
+                            write_objects(parent, ty, content)
                         case "ref-delta":
                             obj = pack_file[:20].hex()
                             pack_file = pack_file[20:]
@@ -188,7 +188,7 @@ def main():
                             content = dec.decompress(pack_file)
                             pack_file = dec.unused_data
                             target_content = b""
-                            base_ty, base_content = read_object(parent, obj)
+                            base_ty, base_content = read_objects(parent, obj)
 
                             _, content = next_size(content)
                             _, content = next_size(content)
@@ -214,7 +214,7 @@ def main():
                                     append = content[1 : size + 1]
                                     content = content[size + 1 :]
                                     target_content += append
-                            write_object(parent, base_ty, target_content)
+                            write_objects(parent, base_ty, target_content)
                         case _:
                             raise RuntimeError("Not implemented")
 
@@ -230,12 +230,12 @@ def main():
                             case b"40000":
                                 render_tree(parent, dir / name.decode(), sha)
                             case b"100644":
-                                _, content = read_object(parent, sha)
+                                _, content = read_objects(parent, sha)
                                 Path(dir / name.decode()).write_bytes(content)
                             case _:
                                 raise RuntimeError("Not implemented")
 
-                _, commit = read_object(parent, refs["HEAD"])
+                _, commit = read_objects(parent, refs["HEAD"])
                 tree_sha = commit[5 : 40 + 5].decode()
                 render_tree(parent, parent, tree_sha)
 
