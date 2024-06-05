@@ -99,7 +99,7 @@ def main():
                     binary_data = binary_data[20:]
                     print(name.decode("utf-8"))
 
-    elif command == "write-tee":
+    elif command == "write-tree":
         print(write_tree("./"))
 
     else:
