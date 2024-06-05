@@ -35,7 +35,7 @@ def write_tree(path: str):
             s += f"40000 {item}\0".encode()
     
     sha1 = int.to_bytes(int(wrie_tree(full), base=16), length=20, byteorder="big")
-        s += sha1
+    s += sha1
     s = f"tree {len(s)}\0".encode()
     sha1 = hashlib.sha1(s).hexdigest()
     os.makedirs(f".git/objects/{sha1[:2]}", exist_ok=True)
